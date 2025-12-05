@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useWallet } from '../context/WalletContext';
 import './Dashboard.css';
@@ -74,22 +75,22 @@ const Dashboard = () => {
         <div className="quick-actions">
           <h2>Quick Actions</h2>
           <div className="actions-grid">
-            <button className="action-btn" disabled>
+            <Link to="/upload" className="action-btn">
               <span className="action-icon">📤</span>
               <span>Upload Prompt</span>
-              <span className="coming-soon">Iteration 2</span>
-            </button>
+              <span className="iteration-badge">Iteration 2</span>
+            </Link>
 
-            <button className="action-btn" disabled>
+            <Link to="/marketplace" className="action-btn">
               <span className="action-icon">🔍</span>
               <span>Browse Marketplace</span>
-              <span className="coming-soon">Iteration 2</span>
-            </button>
+              <span className="iteration-badge">Iteration 2</span>
+            </Link>
 
             <button className="action-btn" disabled>
               <span className="action-icon">💰</span>
               <span>View Transactions</span>
-              <span className="coming-soon">Iteration 2</span>
+              <span className="coming-soon">Iteration 3</span>
             </button>
 
             <button className="action-btn" disabled>

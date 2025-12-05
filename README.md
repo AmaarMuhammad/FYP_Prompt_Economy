@@ -2,41 +2,75 @@
 
 A blockchain-powered platform for buying, selling, and sharing AI prompts with guaranteed compensation and quality assurance.
 
-## 📊 Project Status: Iteration 1 Complete ✅
+## 📊 Project Status: Iteration 2 Complete ✅
 
-**Timeline:** Sept-Oct 2025 (Mid-Evaluation)
+**Timeline:** Sept-Nov 2025 (Mid-Evaluation Extended)
+
+### Completed Features (Iteration 2)
+
+✅ **Prompt Marketplace**
+- Browse and search prompts with filters
+- Category-based organization (Writing, Marketing, Coding, etc.)
+- Sort by popularity, rating, price, newest
+- Pagination support
+- Real-time statistics (views, sales, ratings)
+
+✅ **Prompt Upload System**
+- Creator dashboard for listing prompts
+- Rich metadata (title, description, content, sample output)
+- Price setting in MATIC
+- Tag system for discoverability
+- AI model and difficulty specification
+- Blockchain transaction for listing
+
+✅ **Purchase Flow**
+- MetaMask payment integration
+- Smart contract handles payment distribution
+- Automatic 5% platform fee
+- 95% goes to creator
+- Instant access after verification
+- Transaction verification system
+
+✅ **PromptMarketplace Smart Contract**
+- listPrompt() - Create marketplace listings
+- purchasePrompt() - Buy prompts with MATIC
+- Platform fee mechanism (5%)
+- Earnings withdrawal for creators
+- Ownership tracking
+- Event logging
+
+✅ **Access Control**
+- Content hidden until purchase
+- Immediate access after transaction
+- Copy to clipboard functionality
+- Purchase history tracking
+
+✅ **Creator Features**
+- View all created prompts
+- Track sales and earnings
+- Withdraw earnings to wallet
+- View purchasers list
+- Edit/deactivate prompts
 
 ### Completed Features (Iteration 1)
 
 ✅ **Blockchain Setup**
-- UserRegistry smart contract (Solidity ^0.8.19)
+- UserRegistry smart contract
 - Hardhat development environment
-- Sepolia testnet deployment scripts
+- Polygon Mumbai testnet deployment
 - Contract interaction setup
 
 ✅ **Wallet Integration**
 - MetaMask connection/disconnection
 - Signature-based authentication
 - Network detection and switching
-- Account change detection
 - Persistent wallet state
 
 ✅ **User Module**
-- User registration (email + wallet required)
-- Dual authentication (email/password OR wallet signature)
+- Dual authentication (email + wallet)
 - JWT token management
-- Profile management with editing
+- Profile management
 - User statistics dashboard
-- MongoDB schema with wallet integration
-
-✅ **UI Implementation**
-- Responsive landing page with features showcase
-- Login page (dual authentication methods)
-- Registration page with wallet requirement
-- Protected dashboard with user stats
-- Profile page with edit functionality
-- Modern glassmorphism design system
-- Complete navigation with wallet display
 
 ## 🛠️ Tech Stack
 
@@ -59,8 +93,9 @@ A blockchain-powered platform for buying, selling, and sharing AI prompts with g
 - Solidity ^0.8.19
 - Hardhat 2.17.2
 - OpenZeppelin Contracts 5.0.0
-- Ethereum (Sepolia Testnet)
+- Polygon Mumbai Testnet (Free!)
 - MetaMask Integration
+- Native MATIC Payments
 
 ### Architecture
 **3-Tier Architecture:**
@@ -95,8 +130,14 @@ A blockchain-powered platform for buying, selling, and sharing AI prompts with g
    
    Create `blockchain/.env`:
    ```env
-   SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_INFURA_KEY
+   POLYGON_MUMBAI_RPC=https://rpc-mumbai.maticvigil.com
    PRIVATE_KEY=your_deployment_wallet_private_key
+   ```
+
+   Create `frontend/.env`:
+   ```env
+   REACT_APP_API_URL=http://localhost:5000/api
+   REACT_APP_MARKETPLACE_CONTRACT_ADDRESS=<deployed_address>
    ```
 
 3. **Start MongoDB:**
@@ -108,11 +149,11 @@ A blockchain-powered platform for buying, selling, and sharing AI prompts with g
    brew services start mongodb-community
    ```
 
-4. **Deploy smart contracts (optional for local testing):**
+4. **Deploy smart contracts:**
    ```bash
    cd blockchain
-   npm run node          # In one terminal
-   npm run deploy:local  # In another terminal
+   npm run compile
+   npm run deploy:mumbai   # For Polygon Mumbai testnet
    ```
 
 5. **Start the application:**
@@ -132,16 +173,22 @@ A blockchain-powered platform for buying, selling, and sharing AI prompts with g
 FYP/
 ├── backend/                    # Express.js API server
 │   ├── controllers/
-│   │   ├── auth.controller.js # Authentication logic
-│   │   └── user.controller.js # User management
+│   │   ├── auth.controller.js    # Authentication logic
+│   │   ├── user.controller.js    # User management
+│   │   ├── prompt.controller.js  # Prompt CRUD operations [NEW]
+│   │   └── purchase.controller.js # Purchase handling [NEW]
 │   ├── models/
-│   │   └── User.model.js      # MongoDB user schema
+│   │   ├── User.model.js         # MongoDB user schema
+│   │   ├── Prompt.model.js       # Prompt schema [NEW]
+│   │   └── Purchase.model.js     # Purchase schema [NEW]
 │   ├── routes/
-│   │   ├── auth.routes.js     # Auth endpoints
-│   │   └── user.routes.js     # User endpoints
+│   │   ├── auth.routes.js        # Auth endpoints
+│   │   ├── user.routes.js        # User endpoints
+│   │   ├── prompt.routes.js      # Prompt endpoints [NEW]
+│   │   └── purchase.routes.js    # Purchase endpoints [NEW]
 │   ├── middleware/
-│   │   └── auth.middleware.js # JWT verification
-│   └── server.js              # Entry point
+│   │   └── auth.middleware.js    # JWT verification
+│   └── server.js                 # Entry point
 │
 ├── frontend/                   # React application
 │   ├── public/
@@ -149,32 +196,40 @@ FYP/
 │   │   └── manifest.json
 │   └── src/
 │       ├── components/
-│       │   ├── Navbar.js      # Navigation with wallet
-│       │   └── PrivateRoute.js
+│       │   ├── Navbar.js           # Navigation with wallet
+│       │   ├── PrivateRoute.js
+│       │   └── PromptCard.js       # Prompt display card [NEW]
 │       ├── context/
-│       │   ├── AuthContext.js # Auth state management
-│       │   └── WalletContext.js # Web3 wallet integration
+│       │   ├── AuthContext.js      # Auth state management
+│       │   ├── WalletContext.js    # Web3 wallet integration
+│       │   └── MarketplaceContext.js # Marketplace state [NEW]
 │       ├── pages/
-│       │   ├── Home.js        # Landing page
-│       │   ├── Login.js       # Dual login
-│       │   ├── Register.js    # Registration with wallet
-│       │   ├── Dashboard.js   # User dashboard
-│       │   └── Profile.js     # Profile management
-│       └── App.js             # Main app with routing
+│       │   ├── Home.js             # Landing page
+│       │   ├── Login.js            # Dual login
+│       │   ├── Register.js         # Registration with wallet
+│       │   ├── Dashboard.js        # User dashboard
+│       │   ├── Profile.js          # Profile management
+│       │   ├── Marketplace.js      # Browse prompts [NEW]
+│       │   ├── PromptDetail.js     # Prompt details & purchase [NEW]
+│       │   └── UploadPrompt.js     # Upload new prompt [NEW]
+│       └── App.js                  # Main app with routing
 │
 ├── blockchain/                 # Smart contracts
 │   ├── contracts/
-│   │   └── UserRegistry.sol   # User registration contract
+│   │   ├── UserRegistry.sol        # User registration contract
+│   │   └── PromptMarketplace.sol   # Marketplace contract [NEW]
 │   ├── scripts/
-│   │   └── deploy.js          # Deployment script
-│   ├── hardhat.config.js      # Hardhat configuration
-│   └── README.md              # Blockchain docs
+│   │   └── deploy.js               # Deployment script (updated)
+│   ├── hardhat.config.js           # Hardhat configuration
+│   └── README.md                   # Blockchain docs
 │
 ├── .env.example               # Environment template
 ├── .gitignore
 ├── package.json               # Root package manager
 ├── README.md                  # This file
-└── SETUP_GUIDE.md            # Detailed setup instructions
+├── SETUP_GUIDE.md            # Detailed setup instructions
+├── ITERATION_2_GUIDE.md      # Iteration 2 implementation guide [NEW]
+└── API_DOCUMENTATION.md       # Complete API reference [NEW]
 ```
 
 ## 🚀 Deployment
@@ -183,8 +238,10 @@ FYP/
 ```bash
 cd blockchain
 npx hardhat compile
-npx hardhat run scripts/deploy.js --network sepolia
+npx hardhat run scripts/deploy.js --network polygon_mumbai
 ```
+
+**Note:** Copy the deployed contract addresses to `frontend/.env`
 
 ### Backend
 - Deploy to Heroku, Railway, or DigitalOcean
@@ -194,7 +251,7 @@ npx hardhat run scripts/deploy.js --network sepolia
 - Build: `npm run build`
 - Deploy to Vercel, Netlify, or AWS S3
 
-## � API Endpoints
+## 🌐 API Endpoints
 
 ### Authentication (`/api/auth`)
 - `POST /register` - Register new user (requires wallet + email)
@@ -203,20 +260,36 @@ npx hardhat run scripts/deploy.js --network sepolia
 - `GET /nonce/:address` - Get nonce for message signing
 - `GET /verify` - Verify JWT token
 
-### User (`/api/user`)
+### User (`/api/users`)
 - `GET /profile` - Get current user profile (protected)
 - `PUT /profile` - Update user profile (protected)
 - `GET /wallet/:address` - Get user by wallet address
 - `GET /stats` - Get user statistics (protected)
 
-## 🔐 Authentication Flow
+### Prompts (`/api/prompts`) [NEW]
+- `GET /` - Get all prompts with filters (public)
+- `GET /search` - Search prompts by text (public)
+- `GET /category/:category` - Get by category (public)
+- `GET /:id` - Get single prompt (content hidden unless purchased)
+- `POST /` - Create new prompt (protected)
+- `GET /user/my-prompts` - Get user's created prompts (protected)
+- `PUT /:id` - Update prompt (protected, creator only)
+- `DELETE /:id` - Delete prompt (protected, creator only)
+- `PUT /:id/blockchain` - Update blockchain ID (protected)
 
-### Email/Password Authentication
-1. User enters email and password
-2. Backend validates credentials
-3. JWT token issued
-4. Token stored in localStorage
-5. User authenticated
+### Purchases (`/api/purchases`) [NEW]
+- `POST /initiate` - Create purchase record (protected)
+- `POST /:id/verify` - Verify blockchain transaction (protected)
+- `GET /my-purchases` - Get user's purchases (protected)
+- `GET /earnings` - Get creator earnings (protected)
+- `GET /check/:promptId` - Check if purchased (protected)
+- `GET /prompt/:promptId/purchasers` - Get purchasers (creator only)
+- `GET /:id` - Get single purchase (protected)
+- `PUT /:id/review` - Add review (protected)
+
+📖 **For complete API documentation, see [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)**
+
+## 🔐 Authentication & Payment Flow
 
 ### Wallet Signature Authentication
 1. User connects MetaMask wallet
@@ -225,6 +298,16 @@ npx hardhat run scripts/deploy.js --network sepolia
 4. Backend verifies signature using ethers.js
 5. JWT token issued on successful verification
 6. User authenticated
+
+### Prompt Purchase Flow [NEW]
+1. **Browse**: User finds prompt on marketplace
+2. **View Details**: Click to see full information (content hidden)
+3. **Purchase**: Click "Purchase Prompt" button
+4. **MetaMask**: Confirm transaction with MATIC payment
+5. **Smart Contract**: Processes payment (95% to creator, 5% platform fee)
+6. **Verification**: Backend verifies blockchain transaction
+7. **Access Granted**: Content revealed, can copy to clipboard
+8. **Creator Earnings**: Accumulated in smart contract, withdraw anytime
 
 ## 🎨 UI Features
 
@@ -249,45 +332,61 @@ npx hardhat run scripts/deploy.js --network sepolia
 
 ## 🧪 Testing the Application
 
-### Test User Registration Flow
-1. Open http://localhost:3000
-2. Click "Register" in navbar
-3. Click "Connect Wallet" and approve MetaMask
-4. Fill in username, email, password
-5. Submit registration
-6. Redirected to login page
+### Test Marketplace Flow [NEW]
+1. Open http://localhost:3000/marketplace
+2. Browse prompts with filters
+3. Search for specific topics
+4. Click on a prompt to view details
+5. Note: Content is hidden until purchase
 
-### Test Wallet Authentication
-1. Click "Login" in navbar
-2. Toggle to "Wallet Authentication"
-3. Click "Connect Wallet"
-4. Click "Sign & Login"
-5. Approve signature in MetaMask
-6. Redirected to dashboard
+### Test Prompt Upload [NEW]
+1. Login/Register and connect wallet
+2. Navigate to "/upload"
+3. Fill in all prompt details
+4. Set price in MATIC (e.g., 0.01)
+5. Click "Upload Prompt"
+6. Approve MetaMask transaction
+7. Wait for confirmation
+8. Prompt appears in marketplace
 
-### Get Test ETH
-- [Sepolia Faucet](https://sepoliafaucet.com/)
-- [QuickNode Faucet](https://faucet.quicknode.com/ethereum/sepolia)
+### Test Purchase Flow [NEW]
+1. Use a different wallet/account
+2. Find a prompt on marketplace
+3. Click "View Details"
+4. Click "Purchase Prompt"
+5. Approve MetaMask payment
+6. Wait for verification
+7. Content is now visible
+8. Copy content to clipboard
 
-## � Future Iterations
+### Test Creator Dashboard [NEW]
+1. Navigate to Dashboard as creator
+2. View "My Prompts" section
+3. See sales and earnings stats
+4. Click "Withdraw Earnings"
+5. Approve MetaMask transaction
+6. MATIC transferred to wallet
 
-### Iteration 2 (Nov-Dec 2025)
-- [ ] Prompt listing and marketplace
-- [ ] Purchase functionality with cryptocurrency
-- [ ] Prompt categories and tags
-- [ ] Search and filter prompts
+### Get Test MATIC
+- [Polygon Mumbai Faucet](https://faucet.polygon.technology/)
+- Alternative: [Alchemy Faucet](https://mumbaifaucet.com/)
 
-### Iteration 3 (Jan-Feb 2026)
+## 🎯 Future Iterations
+
+### Iteration 3 (Dec 2025-Jan 2026)
+- [ ] IPFS integration for decentralized storage
 - [ ] Rating and review system
-- [ ] Reputation algorithm
-- [ ] Analytics dashboard
-- [ ] Transaction history
+- [ ] Reputation algorithm improvements
+- [ ] Advanced analytics dashboard
+- [ ] Prompt collections/bundles
 
-### Iteration 4 (Mar-Apr 2026)
+### Iteration 4 (Feb-Apr 2026)
 - [ ] AI prompt testing interface
-- [ ] Advanced search with AI
-- [ ] Recommendation system
+- [ ] Social features (follow creators, comments)
+- [ ] Recommendation system with AI
+- [ ] Advanced search algorithms
 - [ ] Mobile app (React Native)
+- [ ] Multi-chain support
 
 ## 🤝 Contributing
 
@@ -312,4 +411,6 @@ Prompt Economy - Decentralized AI Prompts Marketplace
 
 ---
 
-**Note:** This project is under active development as part of a Final Year Project. The current version represents Iteration 1 functionality focused on blockchain setup, wallet integration, and user module implementation.
+**Note:** This project is under active development as part of a Final Year Project. Iteration 2 is now complete with full marketplace functionality. The platform now supports buying, selling, and trading AI prompts with blockchain-secured payments on Polygon Mumbai testnet.
+
+**Latest Update:** November 2025 - Iteration 2 Complete ✅

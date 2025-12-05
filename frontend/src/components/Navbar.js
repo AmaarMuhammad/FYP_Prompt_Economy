@@ -31,6 +31,8 @@ const Navbar = () => {
           {isAuthenticated ? (
             <>
               <Link to="/dashboard" className="nav-link">Dashboard</Link>
+              <Link to="/marketplace" className="nav-link">Marketplace</Link>
+              <Link to="/upload" className="nav-link">Upload</Link>
               <Link to="/profile" className="nav-link">Profile</Link>
               
               {account ? (
@@ -53,6 +55,7 @@ const Navbar = () => {
             </>
           ) : (
             <>
+              <Link to="/marketplace" className="nav-link">Marketplace</Link>
               <Link to="/login" className="nav-link">Login</Link>
               <Link to="/register">
                 <button className="btn btn-primary">Get Started</button>

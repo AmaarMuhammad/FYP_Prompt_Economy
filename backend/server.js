@@ -10,6 +10,8 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 // Import routes
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
+const promptRoutes = require('./routes/prompt.routes');
+const purchaseRoutes = require('./routes/purchase.routes');
 
 // Initialize express app
 const app = express();
@@ -51,6 +53,8 @@ mongoose.connect(process.env.MONGODB_URI, {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/prompts', promptRoutes);
+app.use('/api/purchases', purchaseRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -65,12 +69,15 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
   res.json({
     name: 'Prompt Economy API',
-    version: '1.0.0 - Iteration 1',
+    version: '2.0.0 - Iteration 2',
     features: [
       'Blockchain Integration',
       'Wallet Connection',
       'User Authentication',
-      'Profile Management'
+      'Profile Management',
+      'Prompt Marketplace',
+      'Buy & Sell Prompts',
+      'Creator Earnings'
     ]
   });
 });

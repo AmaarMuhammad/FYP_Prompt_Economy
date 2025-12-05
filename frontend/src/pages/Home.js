@@ -126,7 +126,7 @@ const Home = () => {
       <footer className="footer">
         <div className="container">
           <p>&copy; 2025 Prompt Economy. All rights reserved.</p>
-          <p>Iteration 1 - Blockchain Setup, Wallet Integration, User Module</p>
+          <p>Iteration 2 - Complete Marketplace with Buy/Sell Functionality</p>
         </div>
       </footer>
     </div>

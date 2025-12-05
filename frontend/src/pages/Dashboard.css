@@ -42,6 +42,11 @@
 
 .stat-icon {
   font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  min-height: 60px;
 }
 
 .stat-info h3 {
@@ -127,11 +132,14 @@
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  text-decoration: none;
 }
 
 .action-btn:not(:disabled):hover {
-  border-color: rgba(102, 126, 234, 0.3);
-  transform: translateY(-2px);
+  border-color: rgba(102, 126, 234, 0.5);
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
 }
 
 .action-btn:disabled {
@@ -149,6 +157,18 @@
   right: 8px;
   background: rgba(102, 126, 234, 0.2);
   color: #667eea;
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.iteration-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
   font-size: 0.7rem;
   padding: 4px 8px;
   border-radius: 4px;
