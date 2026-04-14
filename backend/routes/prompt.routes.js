@@ -11,21 +11,38 @@ const {
   getPromptsByCategory,
   updateBlockchainId
 } = require('../controllers/prompt.controller');
-const { protect } = require('../middleware/auth.middleware');
 
-// Public routes
-router.get('/', getAllPrompts); // Get all prompts with filters
-router.get('/search', searchPrompts); // Search prompts
-router.get('/category/:category', getPromptsByCategory); // Get by category
-router.get('/:id', getPromptById); // Get single prompt (content hidden unless purchased)
+// ✅ Added optionalAuth to the imports
+const { protect, optionalAuth } = require('../middleware/auth.middleware');
+const { createPromptReview, getPromptReviews } = require('../controllers/prompt.controller');
 
-// Protected routes (require authentication)
-router.use(protect); // All routes below require authentication
+// ==========================================
+// 1. SPECIFIC PUBLIC ROUTES (Must go first)
+// ==========================================
+router.get('/', getAllPrompts); 
+router.get('/search', searchPrompts); 
+router.get('/category/:category', getPromptsByCategory); 
 
-router.post('/', createPrompt); // Create new prompt
-router.get('/user/my-prompts', getMyPrompts); // Get user's created prompts
-router.put('/:id', updatePrompt); // Update prompt (creator only)
-router.delete('/:id', deletePrompt); // Delete/deactivate prompt (creator only)
-router.put('/:id/blockchain', updateBlockchainId); // Update blockchain ID after smart contract listing
+// ==========================================
+// 2. SPECIFIC PROTECTED ROUTES
+// ==========================================
+router.get('/my-prompts', protect, getMyPrompts); 
+
+// ==========================================
+// 3. DYNAMIC / WILDCARD ROUTES (Must go last)
+// ==========================================
+router.get('/:id', optionalAuth, getPromptById); 
+router.get('/:id/reviews', getPromptReviews); // <--- MOVED HERE!
+
+// ==========================================
+// 4. REMAINING PROTECTED ROUTES
+// ==========================================
+router.use(protect); // Applies auth to all routes below this line
+
+router.post('/', createPrompt); 
+router.put('/:id', updatePrompt); 
+router.delete('/:id', deletePrompt); 
+router.put('/:id/blockchain', updateBlockchainId); 
+router.post('/:id/reviews', createPromptReview); 
 
 module.exports = router;

@@ -1,4 +1,6 @@
 const hre = require("hardhat");
+const path = require("path");
+const fs = require("fs");
 
 async function main() {
   console.log("Deploying contracts...\n");
@@ -20,12 +22,8 @@ async function main() {
   console.log("✅ PromptMarketplace deployed to:", promptMarketplaceAddress);
 
   // Save the contract addresses for frontend use
-  const fs = require("fs");
-  const contractsDir = "../frontend/src/contracts";
-
-  if (!fs.existsSync(contractsDir)) {
-    fs.mkdirSync(contractsDir, { recursive: true });
-  }
+  const contractsDir = path.resolve(__dirname, "../../frontend/src/contracts");
+  fs.mkdirSync(contractsDir, { recursive: true });
 
   const addresses = {
     UserRegistry: userRegistryAddress,
@@ -33,8 +31,8 @@ async function main() {
   };
 
   fs.writeFileSync(
-    contractsDir + "/contract-address.json",
-    JSON.stringify(addresses, undefined, 2)
+    path.join(contractsDir, "contract-address.json"),
+    JSON.stringify(addresses, null, 2)
   );
 
   console.log("\n✅ Contract addresses saved to frontend/src/contracts/contract-address.json");

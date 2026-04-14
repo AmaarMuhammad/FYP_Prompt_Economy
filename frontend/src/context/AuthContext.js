@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useWallet } from './WalletContext';
@@ -31,27 +31,30 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  // Load user on mount
+  // Load user profile
+  const loadUser = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_URL}/users/profile`);
+      setUser(response.data.data.user);
+    } catch (error) {
+      console.error('Load user error:', error);
+      // If loading the user fails, clear any existing auth state
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('token');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load user on mount or when token changes
   useEffect(() => {
     if (token) {
       loadUser();
     } else {
       setLoading(false);
     }
-  }, [token]);
-
-  // Load user profile
-  const loadUser = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/users/profile`);
-      setUser(response.data.data.user);
-    } catch (error) {
-      console.error('Load user error:', error);
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [token, loadUser]);
 
   // Register user
   const register = async (userData) => {

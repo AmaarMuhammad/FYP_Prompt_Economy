@@ -4,21 +4,30 @@
 }
 
 .prompt-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  /* BRIGHTER BLUE GRADIENT: Brought back the effect from the old card 
+     but with new electric blue colors to make it pop! */
+  background: 
+    radial-gradient(circle at top left, rgba(96, 165, 250, 0.2), transparent 60%), /* Bright Blue */
+    radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.15), transparent 60%), /* Deeper Blue */
+    var(--bg-dark); /* Pure Black base so colors show */
+  
+  /* Keep all other modern styles */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-base), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   height: 100%;
-  border: 1px solid #e5e7eb;
 }
 
 .prompt-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  border-color: #6366f1;
+  border-color: var(--border-glow);
+  box-shadow: var(--shadow-glow), inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
 .prompt-card-header {
@@ -33,14 +42,19 @@
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 600;
-  color: white;
+  font-weight: 700;
+  
+  /* Bright Blue Category Badge */
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--accent-light);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .verified-badge {
-  background: #10b981;
+  background: var(--accent-primary);
   color: white;
   width: 24px;
   height: 24px;
@@ -50,12 +64,13 @@
   justify-content: center;
   font-size: 14px;
   font-weight: bold;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
 }
 
 .prompt-title {
   font-size: 20px;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text-main);
   margin: 0 0 12px 0;
   line-height: 1.4;
   display: -webkit-box;
@@ -66,7 +81,7 @@
 
 .prompt-description {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-muted);
   line-height: 1.6;
   margin: 0 0 16px 0;
   flex-grow: 1;
@@ -77,7 +92,12 @@
   gap: 16px;
   margin-bottom: 16px;
   padding: 12px;
-  background: #f9fafb;
+  
+  /* CLEANUP: Darkened the internal boxes to black for contrast 
+     against the new card gradient */
+  background: #000000; 
+  border: 1px solid var(--border-light);
+  
   border-radius: 8px;
 }
 
@@ -89,7 +109,7 @@
 
 .meta-label {
   font-size: 11px;
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
@@ -97,7 +117,7 @@
 
 .meta-value {
   font-size: 13px;
-  color: #374151;
+  color: var(--text-main);
   font-weight: 500;
 }
 
@@ -106,7 +126,7 @@
   gap: 16px;
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .stat-item {
@@ -114,13 +134,13 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .stat-icon {
   width: 16px;
   height: 16px;
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .prompt-creator {
@@ -140,8 +160,12 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  /* Electric Blue Avatar */
+  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent-primary) 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,20 +176,20 @@
 .creator-name {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-main);
   margin: 0;
 }
 
 .creator-date {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text-muted);
   margin: 2px 0 0 0;
 }
 
 .creator-reputation {
   font-size: 12px;
   font-weight: 600;
-  color: #f59e0b;
+  color: var(--accent-light);
 }
 
 .prompt-footer {
@@ -183,7 +207,7 @@
 
 .price-label {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text-muted);
   text-transform: uppercase;
   font-weight: 600;
 }
@@ -191,24 +215,34 @@
 .price-value {
   font-size: 18px;
   font-weight: 700;
-  color: #6366f1;
+  color: var(--text-main);
+}
+
+/* Make MATIC text blue and smaller */
+.price-value span {
+  color: var(--accent-light);
+  font-size: 14px;
+  margin-left: 4px;
 }
 
 .view-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* Electric Blue Button */
+  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent-primary) 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  
   border: none;
   padding: 10px 20px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .view-button:hover {
   transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
 }
 
 /* Responsive */
@@ -234,5 +268,96 @@
   .view-button {
     padding: 8px 16px;
     font-size: 13px;
+  }
+}
+.prompt-card {
+  padding: 0; /* Removed padding so image goes edge-to-edge */
+  overflow: hidden; /* Contains the image zoom */
+}
+
+.prompt-card-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 100%;
+}
+
+.prompt-card-image-container {
+  width: 100%;
+  height: 190px;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.prompt-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* The smooth zoom effect on hover */
+.prompt-card:hover .prompt-preview-image {
+  transform: scale(1.08);
+}
+
+.image-overlay-badges {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  z-index: 2;
+}
+
+.overlay-category {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.verified-badge.small {
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+}
+
+/* --- HOVER POPOUT STYLES --- */
+.image-hover-popout {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 99999; /* Ensures it is above everything, including navbars */
+  background: rgba(10, 10, 15, 0.85); /* Dark glass background */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border-glow);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(37, 99, 235, 0.3);
+  pointer-events: none; /* Crucial: stops the popout from flickering when mouse moves */
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.image-hover-popout img {
+  max-width: 80vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
+}
+
+@keyframes popIn {
+  from { 
+    opacity: 0; 
+    transform: translate(-50%, -50%) scale(0.9); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1); 
   }
 }

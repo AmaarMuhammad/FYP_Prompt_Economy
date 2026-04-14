@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useMarketplace } from '../context/MarketplaceContext';
 import './UploadPrompt.css';
+import { uploadImageToIPFS } from '../utils/pinata';
 
 const UploadPrompt = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { createPrompt, loading } = useMarketplace();
+  const [imageFile, setImageFile] = useState(null); // Tracks the selected image file
+  const [isUploadingImage, setIsUploadingImage] = useState(false); // UI loading state
 
   const [formData, setFormData] = useState({
     title: '',
@@ -47,6 +50,8 @@ const UploadPrompt = () => {
     'Other',
     'Any'
   ];
+
+  const isImageModel = ['Midjourney', 'DALL-E', 'Stable Diffusion'].includes(formData.aiModel);
 
   const difficulties = ['Beginner', 'Intermediate', 'Advanced'];
 
@@ -96,28 +101,43 @@ const UploadPrompt = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
-    // Convert tags string to array
-    const tagsArray = formData.tags
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag.length > 0);
+    try {
+      let finalSampleOutput = formData.sampleOutput;
+      const isImageModel = ['Midjourney', 'DALL-E', 'Stable Diffusion'].includes(formData.aiModel);
 
-    const promptData = {
-      ...formData,
-      tags: tagsArray
-    };
+      // IF it's an image model AND they selected a file, upload to IPFS first!
+      if (isImageModel && imageFile) {
+        setIsUploadingImage(true);
+        // This uploads the image and returns the gateway URL
+        finalSampleOutput = await uploadImageToIPFS(imageFile); 
+        setIsUploadingImage(false);
+      }
 
-    const result = await createPrompt(promptData);
+      const tagsArray = formData.tags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
 
-    if (result) {
-      navigate('/marketplace');
+      const promptData = {
+        ...formData,
+        tags: tagsArray,
+        sampleOutput: finalSampleOutput // Use the newly generated IPFS URL!
+      };
+
+      const result = await createPrompt(promptData);
+
+      if (result) {
+        navigate('/marketplace');
+      }
+    } catch (error) {
+      setIsUploadingImage(false);
+      console.error("Upload failed:", error);
+      // You could add a toast.error() here
     }
   };
 
@@ -203,26 +223,55 @@ const UploadPrompt = () => {
           <span className="char-count">{formData.content.length}/10000</span>
         </div>
 
-        {/* Sample Output */}
+        {/* Dynamic Sample Output: File Upload vs Text */}
         <div className="form-group">
           <label htmlFor="sampleOutput">
-            Sample Output (Optional)
+            {['Midjourney', 'DALL-E', 'Stable Diffusion'].includes(formData.aiModel) 
+              ? 'Upload Sample Image (Highly Recommended)' 
+              : 'Sample Output (Optional)'}
           </label>
-          <textarea
-            id="sampleOutput"
-            name="sampleOutput"
-            value={formData.sampleOutput}
-            onChange={handleChange}
-            placeholder="Provide a sample of what output this prompt generates..."
-            rows={4}
-            maxLength={1000}
-          />
+          
+            {['Midjourney', 'DALL-E', 'Stable Diffusion'].includes(formData.aiModel) ? (
+              <div className="file-upload-container">
+                {/* The Styled Label acts as our new button */}
+                <label htmlFor="imageFile" className={`custom-file-upload ${imageFile ? 'has-file' : ''}`}>
+                  <svg className="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span className="upload-text">
+                    {imageFile ? imageFile.name : 'Click to Browse for Image'}
+                  </span>
+                  {!imageFile && <span className="upload-subtext">JPG, PNG, GIF up to 5MB</span>}
+                </label>
+              
+                {/* The ugly default input is now hidden! */}
+                <input
+                  type="file"
+                  id="imageFile"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files[0])}
+                  className="hidden-file-input"
+                />
+              </div>
+            ) : (
+            <textarea
+              id="sampleOutput"
+              name="sampleOutput"
+              value={formData.sampleOutput}
+              onChange={handleChange}
+              placeholder="Provide a sample of what output this prompt generates..."
+              rows={4}
+              maxLength={1000}
+            />
+          )}
+          
           <p className="field-hint">
-            Show potential buyers what kind of results they can expect
+            {['Midjourney', 'DALL-E', 'Stable Diffusion'].includes(formData.aiModel)
+              ? "Upload a generated image. This will be stored securely on IPFS and used as the cover photo." 
+              : "Show potential buyers what kind of results they can expect."}
           </p>
-          <span className="char-count">{formData.sampleOutput.length}/1000</span>
         </div>
-
+        
         {/* Category and AI Model Row */}
         <div className="form-row">
           <div className="form-group">

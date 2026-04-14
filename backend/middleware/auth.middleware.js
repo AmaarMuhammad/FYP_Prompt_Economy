@@ -92,3 +92,23 @@ exports.creatorOrAdmin = (req, res, next) => {
   }
   next();
 };
+
+// Optional Auth - Doesn't block guests, but identifies logged-in users
+exports.optionalAuth = async (req, res, next) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (token) {
+    try {
+      const jwt = require('jsonwebtoken');
+      const User = require('../models/User.model');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = await User.findById(decoded.id || decoded._id).select('-password');
+    } catch (error) {
+      // If token is expired/invalid, just ignore and treat as guest
+    }
+  }
+  next();
+};

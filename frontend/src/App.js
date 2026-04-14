@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import Marketplace from './pages/Marketplace';
 import PromptDetail from './pages/PromptDetail';
 import UploadPrompt from './pages/UploadPrompt';
+import EditPrompt from './pages/EditPrompt';
 
 function App() {
   return (
@@ -77,6 +78,14 @@ function App() {
                   element={
                     <PrivateRoute>
                       <Profile />
+                    </PrivateRoute>
+                  } 
+                />
+                <Route 
+                  path="/prompts/:id/edit" 
+                  element={
+                    <PrivateRoute>
+                      <EditPrompt />
                     </PrivateRoute>
                   } 
                 />

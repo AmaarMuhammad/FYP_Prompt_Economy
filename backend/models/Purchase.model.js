@@ -135,8 +135,15 @@ purchaseSchema.methods.addReview = function(rating, review) {
 // Static method to get user's purchases
 purchaseSchema.statics.getUserPurchases = function(userId, options = {}) {
   return this.find({ buyer: userId, status: 'completed' })
-    .populate('prompt', 'title category price creator')
-    .populate('prompt.creator', 'username')
+    // Use nested object syntax for Deep Populate
+    .populate({
+      path: 'prompt',
+      select: 'title category price creator',
+      populate: {
+        path: 'creator',
+        select: 'username walletAddress'
+      }
+    })
     .sort({ createdAt: -1 })
     .limit(options.limit || 20)
     .skip(options.skip || 0);

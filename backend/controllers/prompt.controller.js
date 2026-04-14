@@ -19,22 +19,38 @@ exports.createPrompt = async (req, res) => {
       sampleOutput,
       aiModel,
       difficulty,
-      language
+      language,
+      ipfsHash,
+      blockchainId,
+      transactionHash
     } = req.body;
 
     // Validate required fields
-    if (!title || !description || !content || !category || !price) {
+    if (!title || !description || !category || !price) {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields'
       });
     }
 
+    // 1. Safely extract the ID from the auth middleware
+    const userId = req.user.id || req.user._id;
+
+    // 2. Fetch the full user profile from the database
+    const currentUser = await User.findById(userId);
+
+    if (!currentUser) {
+      return res.status(404).json({ success: false, message: 'User not found or unauthorized' });
+    }
+
     // Create prompt
     const prompt = await Prompt.create({
       title,
       description,
-      content,
+      content: req.body.secretPromptText || content || 'Stored securely on IPFS',
+      ipfsHash,
+      blockchainId,
+      transactionHash,
       category,
       tags: tags || [],
       price,
@@ -42,8 +58,8 @@ exports.createPrompt = async (req, res) => {
       aiModel: aiModel || 'Any',
       difficulty: difficulty || 'Intermediate',
       language: language || 'English',
-      creator: req.user._id,
-      creatorWallet: req.user.walletAddress
+      creator: currentUser._id,
+      creatorWallet: currentUser.walletAddress
     });
 
     // Populate creator info
@@ -168,10 +184,13 @@ exports.getPromptById = async (req, res) => {
     let fullContent = null;
 
     if (req.user) {
-      hasPurchased = await Purchase.hasPurchased(req.user._id, prompt._id);
+      // ✅ SAFELY EXTRACT USER ID HERE
+      const safeUserId = req.user.id || req.user._id;
+      
+      hasPurchased = await Purchase.hasPurchased(safeUserId, prompt._id);
       
       // If user is creator or has purchased, show full content
-      if (hasPurchased || prompt.creator._id.toString() === req.user._id.toString()) {
+      if (hasPurchased || prompt.creator._id.toString() === safeUserId.toString()) {
         fullContent = prompt.content;
       }
     }
@@ -215,8 +234,11 @@ exports.updatePrompt = async (req, res) => {
       });
     }
 
-    // Check ownership
-    if (prompt.creator.toString() !== req.user._id.toString()) {
+    // ✅ SAFELY EXTRACT USER ID (The Fix!)
+    const safeUserId = req.user.id || req.user._id;
+
+    // Check ownership safely
+    if (prompt.creator.toString() !== safeUserId.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this prompt'
@@ -227,15 +249,12 @@ exports.updatePrompt = async (req, res) => {
     const allowedUpdates = [
       'title',
       'description',
-      'content',
       'category',
       'tags',
-      'price',
       'sampleOutput',
       'aiModel',
       'difficulty',
-      'language',
-      'isActive'
+      'language'
     ];
 
     // Update only allowed fields
@@ -279,8 +298,10 @@ exports.deletePrompt = async (req, res) => {
       });
     }
 
+    const userId = req.user.id || req.user._id;
+
     // Check ownership
-    if (prompt.creator.toString() !== req.user._id.toString()) {
+    if (prompt.creator.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this prompt'
@@ -315,12 +336,16 @@ exports.getMyPrompts = async (req, res) => {
     const { page = 1, limit = 20 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const prompts = await Prompt.find({ creator: req.user._id })
+    // Safely extract the ID
+    const userId = req.user.id || req.user._id;
+
+    // Use the safe userId for both queries
+    const prompts = await Prompt.find({ creator: userId })
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip(skip);
 
-    const total = await Prompt.countDocuments({ creator: req.user._id });
+    const total = await Prompt.countDocuments({ creator: userId });
 
     res.status(200).json({
       success: true,
@@ -470,5 +495,77 @@ exports.updateBlockchainId = async (req, res) => {
       message: 'Failed to update blockchain ID',
       error: error.message
     });
+  }
+};
+
+const Review = require('../models/Review.model');
+
+/**
+ * @desc    Create a review for a prompt
+ * @route   POST /api/prompts/:id/reviews
+ * @access  Private
+ */
+exports.createPromptReview = async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    const promptId = req.params.id;
+    const userId = req.user.id || req.user._id;
+
+    const prompt = await Prompt.findById(promptId);
+
+    if (!prompt) {
+      return res.status(404).json({ success: false, message: 'Prompt not found' });
+    }
+
+    // Check if user is the creator (Creators shouldn't review their own prompts)
+    if (prompt.creator.toString() === userId.toString()) {
+      return res.status(400).json({ success: false, message: 'You cannot review your own prompt' });
+    }
+
+    // Check if user already reviewed this prompt
+    const alreadyReviewed = await Review.findOne({
+      prompt: promptId,
+      user: userId
+    });
+
+    if (alreadyReviewed) {
+      return res.status(400).json({ success: false, message: 'You have already reviewed this prompt' });
+    }
+
+    const review = await Review.create({
+      prompt: promptId,
+      user: userId,
+      rating: Number(rating),
+      comment
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Review added successfully',
+      data: review
+    });
+
+  } catch (error) {
+    console.error('Review Error:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+/**
+ * @desc    Get all reviews for a prompt
+ * @route   GET /api/prompts/:id/reviews
+ * @access  Public
+ */
+exports.getPromptReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find({ prompt: req.params.id }).populate('user', 'username avatar');
+    
+    res.status(200).json({
+      success: true,
+      count: reviews.length,
+      data: reviews
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };

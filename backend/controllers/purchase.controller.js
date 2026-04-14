@@ -1,5 +1,6 @@
 const Purchase = require('../models/Purchase.model');
 const Prompt = require('../models/Prompt.model');
+const User = require('../models/User.model'); // <-- Added User model import
 const { ethers } = require('ethers');
 
 /**
@@ -18,6 +19,15 @@ exports.initiatePurchase = async (req, res) => {
       });
     }
 
+    // Safely extract the ID from the auth middleware
+    const userId = req.user.id || req.user._id;
+
+    // Fetch the full user profile to get the correct _id and walletAddress
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     // Check if prompt exists
     const prompt = await Prompt.findById(promptId);
     if (!prompt) {
@@ -28,7 +38,7 @@ exports.initiatePurchase = async (req, res) => {
     }
 
     // Check if user is trying to buy their own prompt
-    if (prompt.creator.toString() === req.user._id.toString()) {
+    if (prompt.creator.toString() === currentUser._id.toString()) {
       return res.status(400).json({
         success: false,
         message: 'You cannot purchase your own prompt'
@@ -37,7 +47,7 @@ exports.initiatePurchase = async (req, res) => {
 
     // Check if already purchased
     const existingPurchase = await Purchase.findOne({
-      buyer: req.user._id,
+      buyer: currentUser._id,
       prompt: promptId
     });
 
@@ -48,12 +58,18 @@ exports.initiatePurchase = async (req, res) => {
       });
     }
 
+    const priceBigInt = BigInt(price);
+    const platformFeeBigInt = (priceBigInt * 5n) / 100n;
+    const creatorEarningBigInt = priceBigInt - platformFeeBigInt;
+
     // Create purchase record
     const purchase = await Purchase.create({
-      buyer: req.user._id,
-      buyerWallet: req.user.walletAddress,
+      buyer: currentUser._id,
+      buyerWallet: currentUser.walletAddress,
       prompt: promptId,
-      price,
+      price: price.toString(),
+      platformFee: platformFeeBigInt.toString(),
+      creatorEarning: creatorEarningBigInt.toString(),
       transactionHash,
       status: 'pending'
     });
@@ -89,6 +105,8 @@ exports.initiatePurchase = async (req, res) => {
  */
 exports.verifyPurchase = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
+    
     const purchase = await Purchase.findById(req.params.id)
       .populate('prompt')
       .populate('buyer', 'username walletAddress');
@@ -101,7 +119,7 @@ exports.verifyPurchase = async (req, res) => {
     }
 
     // Check ownership
-    if (purchase.buyer._id.toString() !== req.user._id.toString()) {
+    if (purchase.buyer._id.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized'
@@ -117,8 +135,8 @@ exports.verifyPurchase = async (req, res) => {
       });
     }
 
-    // Verify on blockchain
-    const provider = new ethers.JsonRpcProvider(process.env.POLYGON_MUMBAI_RPC || 'https://rpc-mumbai.maticvigil.com');
+    // Verify on blockchain (UPDATED TO SEPOLIA)
+    const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com');
     
     try {
       const receipt = await provider.getTransactionReceipt(purchase.transactionHash);
@@ -183,16 +201,17 @@ exports.verifyPurchase = async (req, res) => {
  */
 exports.getMyPurchases = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     const { page = 1, limit = 20 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const purchases = await Purchase.getUserPurchases(req.user._id, {
+    const purchases = await Purchase.getUserPurchases(userId, {
       limit: parseInt(limit),
       skip
     });
 
     const total = await Purchase.countDocuments({
-      buyer: req.user._id,
+      buyer: userId,
       status: 'completed'
     });
 
@@ -223,10 +242,10 @@ exports.getMyPurchases = async (req, res) => {
  */
 exports.getPromptPurchasers = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     const { promptId } = req.params;
     const { page = 1, limit = 50 } = req.query;
 
-    // Check if prompt exists and user is the creator
     const prompt = await Prompt.findById(promptId);
     if (!prompt) {
       return res.status(404).json({
@@ -235,7 +254,7 @@ exports.getPromptPurchasers = async (req, res) => {
       });
     }
 
-    if (prompt.creator.toString() !== req.user._id.toString()) {
+    if (prompt.creator.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to view purchasers'
@@ -281,10 +300,10 @@ exports.getPromptPurchasers = async (req, res) => {
  */
 exports.getEarnings = async (req, res) => {
   try {
-    const earnings = await Purchase.getCreatorEarnings(req.user._id);
+    const userId = req.user.id || req.user._id;
+    const earnings = await Purchase.getCreatorEarnings(userId);
 
-    // Also get breakdown by prompt
-    const prompts = await Prompt.find({ creator: req.user._id });
+    const prompts = await Prompt.find({ creator: userId });
     const promptEarnings = await Promise.all(
       prompts.map(async (prompt) => {
         const purchases = await Purchase.find({
@@ -331,9 +350,10 @@ exports.getEarnings = async (req, res) => {
  */
 exports.checkPurchaseStatus = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     const { promptId } = req.params;
 
-    const hasPurchased = await Purchase.hasPurchased(req.user._id, promptId);
+    const hasPurchased = await Purchase.hasPurchased(userId, promptId);
 
     res.status(200).json({
       success: true,
@@ -359,6 +379,7 @@ exports.checkPurchaseStatus = async (req, res) => {
  */
 exports.getPurchaseById = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     const purchase = await Purchase.findById(req.params.id)
       .populate('prompt', 'title category price creator')
       .populate('buyer', 'username walletAddress');
@@ -370,8 +391,7 @@ exports.getPurchaseById = async (req, res) => {
       });
     }
 
-    // Check ownership
-    if (purchase.buyer._id.toString() !== req.user._id.toString()) {
+    if (purchase.buyer._id.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized'
@@ -399,6 +419,7 @@ exports.getPurchaseById = async (req, res) => {
  */
 exports.addReview = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     const { rating, review } = req.body;
 
     if (!rating || rating < 1 || rating > 5) {
@@ -417,15 +438,13 @@ exports.addReview = async (req, res) => {
       });
     }
 
-    // Check ownership
-    if (purchase.buyer.toString() !== req.user._id.toString()) {
+    if (purchase.buyer.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized'
       });
     }
 
-    // Check if already reviewed
     if (purchase.rating) {
       return res.status(400).json({
         success: false,
@@ -433,10 +452,7 @@ exports.addReview = async (req, res) => {
       });
     }
 
-    // Add review
     await purchase.addReview(rating, review);
-
-    // Update prompt rating
     await purchase.prompt.updateRating(rating);
 
     res.status(200).json({

@@ -17,10 +17,11 @@ const Marketplace = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('All');
 
   useEffect(() => {
     loadPrompts();
-  }, [filters.category, filters.sortBy, filters.aiModel, filters.difficulty]);
+  }, [loadPrompts, filters.category, filters.sortBy, filters.aiModel, filters.difficulty]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -121,6 +122,7 @@ const Marketplace = () => {
 
       {/* Filters Panel */}
       {showFilters && (
+
         <div className="filters-panel">
           <div className="filter-group">
             <label>Category</label>
@@ -131,6 +133,18 @@ const Marketplace = () => {
               {categories.map(cat => (
                 <option key={cat} value={cat === 'All' ? '' : cat}>{cat}</option>
               ))}
+            </select>
+          </div>
+
+        <div className="filter-group">
+            <label>Prompt Type</label>
+            <select 
+              value={typeFilter} 
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="All">All Types</option>
+              <option value="Image">Image Prompts</option>
+              <option value="Text">Text Prompts</option>
             </select>
           </div>
 
@@ -174,6 +188,7 @@ const Marketplace = () => {
             Reset Filters
           </button>
         </div>
+
       )}
 
       {/* Stats Bar */}
@@ -203,7 +218,15 @@ const Marketplace = () => {
       ) : (
         <>
           <div className="prompts-grid">
-            {prompts.map(prompt => (
+            {prompts.filter(prompt => {
+              // Local filtering logic for Prompt Types
+              if (typeFilter === 'All') return true;
+              
+              const imageModels = ['Midjourney', 'DALL-E', 'Stable Diffusion'];
+              const isImage = imageModels.includes(prompt.aiModel);
+              
+              return typeFilter === 'Image' ? isImage : !isImage;
+            }).map(prompt => (
               <PromptCard key={prompt._id} prompt={prompt} />
             ))}
           </div>

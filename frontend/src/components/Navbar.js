@@ -5,7 +5,7 @@ import { useWallet } from '../context/WalletContext';
 import './Navbar.css';
 
 const Navbar = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const { account, connectWallet, disconnectWallet, isConnecting } = useWallet();
   const navigate = useNavigate();
 

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 
@@ -25,7 +25,7 @@ export const WalletProvider = ({ children }) => {
   };
 
   // Connect wallet
-  const connectWallet = async () => {
+  const connectWallet = useCallback(async () => {
     if (!isMetaMaskInstalled()) {
       toast.error('Please install MetaMask to continue');
       window.open('https://metamask.io/download/', '_blank');
@@ -35,28 +35,51 @@ export const WalletProvider = ({ children }) => {
     try {
       setIsConnecting(true);
 
-      // Request account access
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts',
       });
 
       const address = accounts[0];
-      
-      // Create provider and signer
+
+      // Create provider to check network
       const web3Provider = new ethers.BrowserProvider(window.ethereum);
-      const web3Signer = await web3Provider.getSigner();
       const network = await web3Provider.getNetwork();
+      const currentChainId = Number(network.chainId);
+
+      const SEPOLIA_CHAIN_ID = 11155111;
+      
+      if (currentChainId !== SEPOLIA_CHAIN_ID) {
+        toast.loading('Switching to Sepolia Testnet...');
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: `0x${SEPOLIA_CHAIN_ID.toString(16)}` }],
+          });
+          toast.dismiss();
+          window.location.reload(); 
+          return null; 
+        } catch (switchError) {
+          toast.dismiss();
+          if (switchError.code === 4902) {
+            toast.error('Please add the Sepolia network to your MetaMask.');
+          } else {
+            toast.error('You must switch to Sepolia to use this DApp.');
+          }
+          return null;
+        }
+      }
+
+      const web3Signer = await web3Provider.getSigner();
 
       setAccount(address);
       setProvider(web3Provider);
       setSigner(web3Signer);
-      setChainId(Number(network.chainId));
+      setChainId(currentChainId);
 
-      // Store in localStorage
       localStorage.setItem('walletConnected', 'true');
       localStorage.setItem('walletAddress', address);
 
-      toast.success('Wallet connected successfully!');
+      toast.success('Wallet connected successfully!', { id: 'wallet-connect-toast' });
       return address;
 
     } catch (error) {
@@ -70,7 +93,7 @@ export const WalletProvider = ({ children }) => {
     } finally {
       setIsConnecting(false);
     }
-  };
+  }, []); // <-- Empty array, perfectly clean!
 
   // Disconnect wallet
   const disconnectWallet = () => {
@@ -131,7 +154,7 @@ export const WalletProvider = ({ children }) => {
       } else if (accounts[0] !== account) {
         setAccount(accounts[0]);
         localStorage.setItem('walletAddress', accounts[0]);
-        toast.info('Account changed');
+        toast('Account changed', {icon: '🔄'});
       }
     };
 
@@ -157,7 +180,7 @@ export const WalletProvider = ({ children }) => {
     if (wasConnected === 'true' && isMetaMaskInstalled()) {
       connectWallet();
     }
-  }, []);
+  }, [connectWallet]);
 
   const value = {
     account,
